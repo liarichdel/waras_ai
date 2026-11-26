@@ -3,45 +3,59 @@
 /* `dark:` follows the data-theme attribute set by the inline script in layout.tsx, not the OS setting. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Light: pale instrument chassis. Text colors checked for WCAG AA against canvas and panel. */
+/*
+  Palette: neutrals plus one accent. The accent is orange (energy, health) and has two jobs:
+  --accent is a fill and always carries --on-accent text; --accent-ink is the same hue darkened or lightened
+  until it passes WCAG AA as text on --canvas and --panel. A rep that needs correction is red (--warn), never
+  orange, so "valid" and "fix it" stay apart even without color.
+*/
 :root,
 [data-theme="light"] {
-  --canvas: #f4f4f3;
+  --canvas: #f6f5f3;
   --panel: #ffffff;
-  --line: #d9d9d6;
-  --line-strong: #a3a3a0;
-  --ink: #171717;
-  --mute: #6b6b6b;
-  --ok: #15803d;
-  --warn: #8a5a00;
+  --line: #e0ddd8;
+  --line-strong: #a8a29b;
+  --ink: #1c1917;
+  --mute: #66605a;
+  --accent: #f97316;
+  --accent-ink: #c2410c;
+  --on-accent: #1c1917;
+  --warn: #dc2626;
+  --warn-ink: #b91c1c;
   color-scheme: light;
 }
 
 /* Dark. Also forced on the camera viewport so the video always sits on a black screen. */
 [data-theme="dark"] {
-  --canvas: #0a0a0a;
-  --panel: #121212;
-  --line: #262626;
-  --line-strong: #404040;
-  --ink: #ededed;
-  --mute: #858585;
-  --ok: #22c55e;
-  --warn: #eab308;
+  --canvas: #12100e;
+  --panel: #1b1917;
+  --line: #2e2b28;
+  --line-strong: #57524c;
+  --ink: #f3f0eb;
+  --mute: #a8a29b;
+  --accent: #f97316;
+  --accent-ink: #fb923c;
+  --on-accent: #1c1917;
+  --warn: #f87171;
+  --warn-ink: #f87171;
   color-scheme: dark;
 }
 
 @theme inline {
   --color-canvas: var(--canvas);
   --color-panel: var(--panel);
-  --color-well: #050505;
+  --color-well: #0c0a09;
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-ink: var(--ink);
   --color-mute: var(--mute);
-  --color-ok: var(--ok);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
   --color-warn: var(--warn);
-  --font-sans: var(--font-jakarta);
-  --font-mono: var(--font-jetbrains);
+  --color-warn-ink: var(--warn-ink);
+  --font-sans: var(--font-barlow);
+  --font-display: var(--font-barlow-condensed);
 }
 
 body {
@@ -50,32 +64,11 @@ body {
 }
 
 ::selection {
-  background: var(--ok);
-  color: #000;
-}
-
-/* Idle mascot blinks: pupils flash to fur color for a moment every 4 s. */
-@keyframes waras-blink {
-  0%,
-  93%,
-  100% {
-    fill: var(--canvas);
-  }
-  95%,
-  97% {
-    fill: var(--ink);
-  }
-}
-.waras-blink {
-  animation: waras-blink 4s steps(1) infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .waras-blink {
-    animation: none;
-  }
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 :focus-visible {
-  outline: 1px solid var(--ink);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }

@@ -53,7 +53,9 @@ function playCue(ac: AudioContext, ok: boolean) {
   });
 }
 
-const LABEL = "font-mono text-[11px] uppercase tracking-wider text-mute";
+// Section and field labels: sentence case, no tracking. Small caps-style labels read as template chrome.
+const LABEL = "text-[13px] font-semibold text-mute";
+const RADIUS = "rounded-lg";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -109,8 +111,8 @@ export default function Home() {
         const lm = pose.detectForVideo(video, performance.now()).landmarks[0];
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (!lm) return setLive(null);
-        draw.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS, { color: "#22C55E", lineWidth: 3 });
-        draw.drawLandmarks(lm, { color: "#EDEDED", fillColor: "#0A0A0A", lineWidth: 2, radius: 3 });
+        draw.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS, { color: "#F97316", lineWidth: 4 });
+        draw.drawLandmarks(lm, { color: "#1C1917", fillColor: "#F3F0EB", lineWidth: 2, radius: 4 });
         const f = jointAngles(lm, video.videoWidth / video.videoHeight);
         setLive(f);
         const rep = f && trackerRef.current.push(f);
@@ -170,37 +172,23 @@ export default function Home() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col lg:border-x lg:border-line">
-      <header className="flex h-12 shrink-0 items-center justify-between gap-4 border-b border-line px-4">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <WarasLogo size={24} />
-          <h1 className="text-[15px] font-extrabold tracking-[-0.02em]">WARAS</h1>
-          <span className="text-mute" aria-hidden>
-            /
-          </span>
-          <p className="truncate text-[13px] tracking-[-0.01em] text-mute">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-line px-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <WarasLogo size={30} />
+          <h1 className="font-display text-2xl font-bold leading-none tracking-wide">WARAS</h1>
+          <p className="truncate text-sm text-mute">
             Wawasan Analisis Raga dan Sikap<span className="hidden md:inline">: korektor squat real-time</span>
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <p className={`${LABEL} hidden h-8 items-center gap-2 border border-line px-2 sm:flex`}>
-            <span className="size-1.5 bg-ok" aria-hidden />
-            On-device vision • No server upload
-          </p>
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
       </header>
 
       <main className="grid flex-1 content-start lg:grid-cols-[minmax(0,68fr)_minmax(0,32fr)] lg:grid-rows-[auto_1fr] lg:content-stretch">
-        {/* Optical viewport */}
         <section aria-label="Kamera" className="p-3 sm:p-5">
-          <div className="relative">
-            <Reticle />
-            <div className="relative aspect-[4/3] w-full border border-line md:aspect-video">
+          <div className={`overflow-hidden border border-line ${RADIUS}`}>
+            <div className="relative aspect-[4/3] w-full md:aspect-video">
               {/* The screen stays dark in both themes so the video and overlay read like a monitor. */}
-              <div
-                data-theme="dark"
-                className="absolute inset-0 overflow-hidden bg-well bg-[radial-gradient(#1f1f1f_1px,transparent_1px)] bg-size-[24px_24px] text-ink"
-              >
+              <div data-theme="dark" className="absolute inset-0 overflow-hidden bg-well text-ink">
                 {/* Mirrored like a selfie by default; angles are unaffected by the flip. */}
                 <video
                   ref={videoRef}
@@ -211,9 +199,10 @@ export default function Home() {
                 <canvas ref={canvasRef} className={`absolute inset-0 h-full w-full object-contain ${flip}`} />
 
                 {running && (
-                  <p className={`${LABEL} absolute left-3 top-3 flex items-center gap-2 bg-canvas/80 px-2 py-1`}>
-                    <span className={`size-1.5 ${live ? "bg-ok" : "bg-line-strong"}`} aria-hidden />
-                    <span className={live ? "text-ink" : ""}>{live ? "Pose terkunci" : "Mencari pose…"}</span>
+                  <p className={`absolute left-3 top-3 flex items-center gap-2 bg-canvas/80 px-2.5 py-1 text-xs font-semibold ${RADIUS}`}>
+                    {/* The dot marks a real state: a pose is being tracked or it is not. */}
+                    <span className={`size-2 rounded-full ${live ? "bg-accent" : "bg-line-strong"}`} aria-hidden />
+                    <span className={live ? "text-ink" : "text-mute"}>{live ? "Pose terkunci" : "Mencari pose…"}</span>
                   </p>
                 )}
                 {running && live && <PhaseStrip phase={phaseOf(live.knee)} />}
@@ -224,33 +213,33 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Control bar, flush under the viewport */}
-            <div className="grid auto-rows-[44px] grid-cols-2 gap-px border-x border-b border-line bg-line sm:grid-cols-4">
+            {/* Control bar, flush under the viewport. Icons are the usual ones for camera, mirror, sound and reset. */}
+            <div className="grid auto-rows-[48px] grid-cols-2 gap-px border-t border-line bg-line sm:grid-cols-4">
               <ControlButton
                 onClick={running ? stop : start}
                 disabled={status === "loading"}
-                icon={running ? <CameraOff size={14} strokeWidth={1.5} /> : <Camera size={14} strokeWidth={1.5} />}
+                icon={running ? <CameraOff size={16} strokeWidth={2} /> : <Camera size={16} strokeWidth={2} />}
               >
                 {running ? "Hentikan kamera" : status === "loading" ? "Memuat…" : "Mulai kamera"}
               </ControlButton>
               <ControlButton
                 onClick={() => setMirror((m) => !m)}
                 pressed={mirror}
-                icon={<FlipHorizontal2 size={14} strokeWidth={1.5} />}
+                icon={<FlipHorizontal2 size={16} strokeWidth={2} />}
               >
                 Mirror
               </ControlButton>
               <ControlButton
                 onClick={toggleAudio}
                 pressed={audio}
-                icon={audio ? <Volume2 size={14} strokeWidth={1.5} /> : <VolumeX size={14} strokeWidth={1.5} />}
+                icon={audio ? <Volume2 size={16} strokeWidth={2} /> : <VolumeX size={16} strokeWidth={2} />}
               >
-                Audio cue
+                Suara
               </ControlButton>
               <ControlButton
                 onClick={reset}
                 disabled={total === 0}
-                icon={<RotateCcw size={14} strokeWidth={1.5} />}
+                icon={<RotateCcw size={16} strokeWidth={2} />}
               >
                 Reset
               </ControlButton>
@@ -258,7 +247,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Telemetry column */}
         {/* Phones: camera, telemetry, then method. Desktop: method sits under the camera, telemetry spans both rows. */}
         <aside
           aria-label="Telemetri"
@@ -269,7 +257,7 @@ export default function Home() {
               <BigNumber>{total}</BigNumber>
             </Metric>
             <Metric label="Benar" className="border-b">
-              <BigNumber className="text-ok">{good}</BigNumber>
+              <BigNumber className="text-accent-ink">{good}</BigNumber>
             </Metric>
             <Metric label="Sudut panggul" className="border-b border-r">
               <Angle value={live?.hip} target={HIP_TARGET} />
@@ -281,62 +269,46 @@ export default function Home() {
 
           <History history={history} />
 
+          {/* The outline color is the state: orange after a valid rep, red after a rep to fix. */}
           <section
             aria-live="polite"
             aria-label="Repetisi terakhir"
-            className={`m-4 border-l-[3px] bg-canvas p-4 ${
-              mood === "good" ? "border-ok" : mood === "warning" ? "border-warn" : "border-line-strong"
+            className={`m-4 border-2 bg-canvas p-4 ${RADIUS} ${
+              mood === "good" ? "border-accent" : mood === "warning" ? "border-warn" : "border-line"
             }`}
           >
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className={LABEL}>Repetisi terakhir</h2>
               {last && (
-                <span className="font-mono text-[11px] uppercase tracking-wider tabular-nums">
-                  <span className="text-mute">#{String(total).padStart(2, "0")} · </span>
-                  <span className={`font-semibold ${last.ok ? "text-ok" : "text-warn"}`}>{last.ok ? "Valid" : "Perbaiki"}</span>
-                </span>
+                <p className="text-[13px] tabular-nums">
+                  <span className="text-mute">Rep {total}: </span>
+                  <span className={`font-bold ${last.ok ? "text-accent-ink" : "text-warn-ink"}`}>{last.ok ? "Valid" : "Perbaiki"}</span>
+                </p>
               )}
             </div>
             <div className="flex items-start gap-4">
-              <WarasCatMascot status={mood} size={64} />
-              <div className="min-w-0 text-sm leading-relaxed">
+              <WarasCatMascot status={mood} size={80} />
+              <div className="min-w-0 text-[15px] leading-relaxed">
                 {!last && <p className="text-mute">Lakukan satu squat penuh (turun lalu berdiri).</p>}
-                {last?.ok && <p className="font-semibold text-ok">Bagus! Squat standar.</p>}
+                {last?.ok && <p className="font-semibold text-accent-ink">Bagus! Squat standar.</p>}
                 {last && !last.ok && (
-                  <ol className="space-y-2">
-                    {last.issues.map((issue, i) => (
-                      <li key={issue} className="flex gap-2">
-                        <span className="font-mono text-[11px] leading-6 text-warn tabular-nums">
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <span>{issue}</span>
-                      </li>
+                  <ul className="list-disc space-y-1.5 pl-4 marker:text-warn-ink">
+                    {last.issues.map((issue) => (
+                      <li key={issue}>{issue}</li>
                     ))}
-                  </ol>
+                  </ul>
                 )}
               </div>
             </div>
           </section>
 
-          <footer className="mt-auto border-t border-line px-4 py-3 font-mono text-[11px] leading-relaxed text-mute">
+          <footer className="mt-auto border-t border-line px-4 py-3 text-xs leading-relaxed text-mute">
             Video diproses di perangkatmu dan tidak dikirim ke server. Metode: Yao et al. (2026), Computers 15(5):293.
           </footer>
         </aside>
 
         <MethodPanel />
       </main>
-    </div>
-  );
-}
-
-function Reticle() {
-  const tick = "pointer-events-none absolute size-3 border-ink";
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-10">
-      <span className={`${tick} -left-[5px] -top-[5px] border-l border-t`} />
-      <span className={`${tick} -right-[5px] -top-[5px] border-r border-t`} />
-      <span className={`${tick} -bottom-[5px] -left-[5px] border-b border-l`} />
-      <span className={`${tick} -bottom-[5px] -right-[5px] border-b border-r`} />
     </div>
   );
 }
@@ -353,13 +325,12 @@ function SetupOverlay({ loading, error, onStart }: { loading: boolean; error: st
       <AlignmentGuide />
       <div className="flex max-w-xs flex-col gap-5">
         <div>
-          <p className={`${LABEL} mb-3`}>Persiapan</p>
+          <h2 className={`${LABEL} mb-3`}>Persiapan</h2>
+          {/* A real sequence, so the steps are numbered. */}
           <ol className="space-y-2.5">
             {STEPS.map((s, i) => (
-              <li key={s} className="flex gap-3 text-[13px] leading-snug sm:text-sm">
-                <span className="font-mono text-[11px] leading-5 text-mute tabular-nums">
-                  {String(i + 1).padStart(2, "0")}.
-                </span>
+              <li key={s} className="flex gap-3 text-sm leading-snug sm:text-[15px]">
+                <span className="w-4 shrink-0 font-semibold tabular-nums text-accent-ink">{i + 1}.</span>
                 <span>{s}</span>
               </li>
             ))}
@@ -368,13 +339,13 @@ function SetupOverlay({ loading, error, onStart }: { loading: boolean; error: st
         <button
           onClick={onStart}
           disabled={loading}
-          className="self-start bg-ok px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-black hover:bg-ink active:translate-y-px disabled:cursor-wait disabled:opacity-60"
+          className={`self-start bg-accent px-5 py-2.5 text-sm font-bold text-on-accent hover:bg-ink hover:text-canvas active:translate-y-px disabled:cursor-wait disabled:opacity-60 ${RADIUS}`}
         >
           {loading ? "Memuat model…" : "Mulai kamera"}
         </button>
         {error && (
-          <p role="alert" className="border-l-[3px] border-warn pl-3 font-mono text-[11px] text-warn">
-            Gagal: {error}
+          <p role="alert" className={`border border-warn px-3 py-2 text-[13px] leading-snug text-warn-ink ${RADIUS}`}>
+            Kamera tidak bisa dibuka: {error}. Cek izin kamera di browser, lalu coba lagi.
           </p>
         )}
       </div>
@@ -382,7 +353,7 @@ function SetupOverlay({ loading, error, onStart }: { loading: boolean; error: st
   );
 }
 
-// Side view: camera at waist height on the left, athlete in profile 2–3 m away, tracked joints marked.
+// Side view: camera at waist height on the left, athlete in profile 2-3 m away, tracked joints marked.
 function AlignmentGuide() {
   const joints: [number, number][] = [
     [150, 44],
@@ -395,16 +366,16 @@ function AlignmentGuide() {
       viewBox="0 0 200 150"
       className="hidden w-56 shrink-0 md:block lg:w-64"
       fill="none"
-      stroke="#737373"
-      strokeWidth={1}
+      stroke="#A8A29B"
+      strokeWidth={1.5}
       shapeRendering="crispEdges"
       aria-label="Panduan posisi: kamera setinggi pinggang, badan menyamping"
       role="img"
     >
-      <line x1="6" y1="130" x2="194" y2="130" stroke="#404040" />
+      <line x1="6" y1="130" x2="194" y2="130" stroke="#57524C" />
       {/* camera + tripod */}
-      <rect x="14" y="76" width="16" height="10" stroke="#EDEDED" />
-      <line x1="30" y1="81" x2="34" y2="81" stroke="#EDEDED" />
+      <rect x="14" y="76" width="16" height="10" stroke="#F3F0EB" />
+      <line x1="30" y1="81" x2="34" y2="81" stroke="#F3F0EB" />
       <line x1="22" y1="86" x2="22" y2="130" />
       {/* line of sight at waist height */}
       <line x1="36" y1="81" x2="140" y2="81" strokeDasharray="3 3" />
@@ -412,20 +383,20 @@ function AlignmentGuide() {
       <line x1="22" y1="140" x2="150" y2="140" />
       <line x1="22" y1="136" x2="22" y2="144" />
       <line x1="150" y1="136" x2="150" y2="144" />
-      <text x="86" y="137" textAnchor="middle" fill="#737373" stroke="none" fontSize="8" className="font-mono">
-        2–3 M
+      <text x="86" y="137" textAnchor="middle" fill="#A8A29B" stroke="none" fontSize="9" fontWeight="600">
+        2–3 m
       </text>
       {/* athlete in profile */}
-      <circle cx="150" cy="34" r="7" stroke="#EDEDED" shapeRendering="auto" />
-      <polyline points="150,44 150,82 150,106 150,128 140,128" stroke="#EDEDED" />
-      <polyline points="150,46 150,66 146,72" stroke="#EDEDED" />
+      <circle cx="150" cy="34" r="7" stroke="#F3F0EB" shapeRendering="auto" />
+      <polyline points="150,44 150,82 150,106 150,128 140,128" stroke="#F3F0EB" />
+      <polyline points="150,46 150,66 146,72" stroke="#F3F0EB" />
       {joints.map(([x, y]) => (
-        <rect key={y} x={x - 2} y={y - 2} width="4" height="4" fill="#22C55E" stroke="none" />
+        <rect key={y} x={x - 2.5} y={y - 2.5} width="5" height="5" fill="#F97316" stroke="none" />
       ))}
-      {/* visible span: shoulder → ankle */}
-      <line x1="172" y1="44" x2="172" y2="128" stroke="#22C55E" />
-      <line x1="168" y1="44" x2="176" y2="44" stroke="#22C55E" />
-      <line x1="168" y1="128" x2="176" y2="128" stroke="#22C55E" />
+      {/* visible span: shoulder to ankle */}
+      <line x1="172" y1="44" x2="172" y2="128" stroke="#F97316" />
+      <line x1="168" y1="44" x2="176" y2="44" stroke="#F97316" />
+      <line x1="168" y1="128" x2="176" y2="128" stroke="#F97316" />
     </svg>
   );
 }
@@ -448,13 +419,14 @@ function ControlButton({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={pressed}
-      className="flex min-w-0 items-center justify-center gap-2 bg-panel px-2 font-mono text-[11px] uppercase tracking-wider text-ink hover:bg-line active:translate-y-px disabled:cursor-not-allowed disabled:text-mute disabled:hover:bg-panel disabled:active:translate-y-0"
+      className="flex min-w-0 items-center justify-center gap-2 bg-panel px-2 text-sm font-semibold text-ink hover:bg-line active:translate-y-px disabled:cursor-not-allowed disabled:text-mute disabled:hover:bg-panel disabled:active:translate-y-0"
     >
-      {pressed !== undefined && (
-        <span className={`size-1.5 shrink-0 ${pressed ? "bg-ok" : "bg-line-strong"}`} aria-hidden />
-      )}
       {icon}
       <span className="truncate">{children}</span>
+      {/* On/off state of the toggle, so it reads without relying on color alone. */}
+      {pressed !== undefined && (
+        <span className={`text-xs font-bold ${pressed ? "text-accent-ink" : "text-mute"}`}>{pressed ? "Aktif" : "Mati"}</span>
+      )}
     </button>
   );
 }
@@ -468,11 +440,12 @@ function Metric({ label, className = "", children }: { label: string; className?
   );
 }
 
+// Condensed numerals: readable from the 2-3 m the person stands away from the screen.
 function BigNumber({ className = "", children }: { className?: string; children: ReactNode }) {
-  return <p className={`font-mono text-5xl font-bold leading-none tabular-nums tracking-tight ${className}`}>{children}</p>;
+  return <p className={`font-display text-6xl font-bold leading-none tabular-nums ${className}`}>{children}</p>;
 }
 
-// Gauge runs from 180° (standing, empty) to 40° (very deep, full); green once the target depth is reached.
+// Gauge runs from 180° (standing, empty) to 40° (very deep, full); orange once the target depth is reached.
 const pct = (deg: number) => Math.min(100, Math.max(0, ((180 - deg) / 140) * 100));
 
 function Angle({ value, target }: { value?: number; target: number }) {
@@ -480,15 +453,18 @@ function Angle({ value, target }: { value?: number; target: number }) {
   const reached = has && value <= target;
   return (
     <>
-      <BigNumber className={reached ? "text-ok" : ""}>{has ? `${value.toFixed(0)}°` : "—"}</BigNumber>
+      <BigNumber className={reached ? "text-accent-ink" : ""}>{has ? `${value.toFixed(0)}°` : "-"}</BigNumber>
       <div>
-        <div className="relative h-1 bg-line">
+        <div className="relative h-1.5 rounded-full bg-line">
           {has && (
-            <div className={`absolute inset-y-0 left-0 ${reached ? "bg-ok" : "bg-ink"}`} style={{ width: `${pct(value)}%` }} />
+            <div
+              className={`absolute inset-y-0 left-0 rounded-full ${reached ? "bg-accent" : "bg-ink"}`}
+              style={{ width: `${pct(value)}%` }}
+            />
           )}
-          <div className="absolute -inset-y-1 w-px bg-mute" style={{ left: `${pct(target)}%` }} />
+          <div className="absolute -inset-y-1 w-0.5 bg-mute" style={{ left: `${pct(target)}%` }} />
         </div>
-        <div className="mt-1.5 flex justify-between font-mono text-[10px] uppercase tracking-wider text-mute tabular-nums">
+        <div className="mt-2 flex justify-between text-xs tabular-nums text-mute">
           <span>180°</span>
           <span>Target {target}°</span>
         </div>
@@ -508,9 +484,9 @@ function History({ history }: { history: boolean[] }) {
     <div className="border-b border-line p-4">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className={LABEL}>Riwayat {HISTORY_SLOTS} rep</h2>
-        <span className="font-mono text-[11px] uppercase tracking-wider text-mute tabular-nums">
-          Akurasi <span className="text-ink">{rate === null ? "—" : `${rate}%`}</span>
-        </span>
+        <p className="text-[13px] tabular-nums text-mute">
+          Akurasi <span className="font-semibold text-ink">{rate === null ? "-" : `${rate}%`}</span>
+        </p>
       </div>
       <ol className="grid grid-cols-12 gap-1">
         {Array.from({ length: HISTORY_SLOTS }, (_, i) => {
@@ -518,7 +494,7 @@ function History({ history }: { history: boolean[] }) {
           return (
             <li
               key={i}
-              className={`h-3 ${ok === undefined ? "border border-line" : ok ? "bg-ok" : "bg-warn"}`}
+              className={`h-4 rounded-sm ${ok === undefined ? "border border-line" : ok ? "bg-accent" : "bg-warn"}`}
               aria-hidden={ok === undefined}
               aria-label={ok === undefined ? undefined : `Rep ${offset + i + 1}: ${ok ? "valid" : "perbaiki"}`}
             />
@@ -531,15 +507,15 @@ function History({ history }: { history: boolean[] }) {
 
 function PhaseStrip({ phase }: { phase: Phase }) {
   return (
-    <ol aria-label="Fase squat" className="absolute right-3 top-3 flex border border-line bg-canvas/80">
+    <ol aria-label="Fase squat" className={`absolute right-3 top-3 flex overflow-hidden border border-line bg-canvas/80 ${RADIUS}`}>
       {PHASES.map((p) => {
         const on = p === phase;
         return (
           <li
             key={p}
             aria-current={on ? "step" : undefined}
-            className={`border-line px-2 py-1 font-mono text-[11px] uppercase tracking-wider not-first:border-l ${
-              on ? (p === "Dasar" ? "bg-ok text-black" : "bg-ink text-canvas") : "text-mute"
+            className={`border-line px-2.5 py-1 text-xs font-semibold not-first:border-l ${
+              on ? (p === "Dasar" ? "bg-accent text-on-accent" : "bg-ink text-canvas") : "text-mute"
             }`}
           >
             {p}
@@ -553,11 +529,12 @@ function PhaseStrip({ phase }: { phase: Phase }) {
 const fmt = (n: number, digits: number) => n.toFixed(digits).replace(".", ",");
 
 // What the app actually checks, with the live fitted numbers, so the verdict is never a black box.
+// Three parallel checks, not a sequence, so they are not numbered.
 const RULES = [
   {
     title: "Koordinasi",
     body: "Sudut panggul harus mengikuti sudut lutut sepanjang gerakan.",
-    formula: `|panggul − (${fmt(params.k, 2)}·lutut + ${fmt(params.b, 2)})| ≤ ${fmt(params.tol, 1)}° · ≥${Math.round(params.minPassRatio * 100)}% frame`,
+    formula: `|panggul − (${fmt(params.k, 2)}·lutut + ${fmt(params.b, 2)})| ≤ ${fmt(params.tol, 1)}°, lolos di ≥${Math.round(params.minPassRatio * 100)}% frame`,
   },
   {
     title: "Kedalaman",
@@ -567,32 +544,29 @@ const RULES = [
   {
     title: "Hitungan",
     body: "Satu repetisi dihitung saat lutut menekuk lalu lurus kembali.",
-    formula: "mulai < 160° · wajib < 145° · selesai ≥ 160°",
+    formula: "mulai < 160°, wajib < 145°, selesai ≥ 160°",
   },
 ];
 
 function MethodPanel() {
   return (
     <section aria-label="Cara penilaian" className="border-t border-line px-3 py-5 sm:px-5 lg:col-start-1 lg:border-t-0 lg:pt-0">
-      <div className="mb-2 flex items-baseline justify-between gap-4">
+      <div className="mb-3 flex items-baseline justify-between gap-4">
         <h2 className={LABEL}>Cara penilaian</h2>
         {/* Leave-one-subject-out result on the paper's Zenodo data; see README "Akurasi". */}
-        <p className="font-mono text-[11px] uppercase tracking-wider text-mute tabular-nums">
-          Akurasi uji <span className="text-ink">91,15%</span> · LOSO
+        <p className="text-[13px] tabular-nums text-mute">
+          Akurasi uji <span className="font-semibold text-ink">91,15%</span> (LOSO)
         </p>
       </div>
-      <ol className="grid gap-px border border-line bg-line sm:grid-cols-3">
-        {RULES.map((r, i) => (
+      <ul className={`grid gap-px overflow-hidden border border-line bg-line sm:grid-cols-3 ${RADIUS}`}>
+        {RULES.map((r) => (
           <li key={r.title} className="flex flex-col gap-2 bg-panel p-4">
-            <p className="flex items-baseline gap-2">
-              <span className="font-mono text-[11px] text-mute tabular-nums">{String(i + 1).padStart(2, "0")}</span>
-              <span className="text-sm font-semibold tracking-[-0.01em]">{r.title}</span>
-            </p>
-            <p className="text-[13px] leading-relaxed text-mute">{r.body}</p>
-            <p className="mt-auto border-t border-line pt-2 font-mono text-[11px] text-ink tabular-nums">{r.formula}</p>
+            <h3 className="text-base font-bold">{r.title}</h3>
+            <p className="text-sm leading-relaxed text-mute">{r.body}</p>
+            <p className="mt-auto border-t border-line pt-2 text-[13px] font-medium tabular-nums">{r.formula}</p>
           </li>
         ))}
-      </ol>
+      </ul>
     </section>
   );
 }
