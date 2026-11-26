@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DrawingUtils, FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-vision";
-import { Camera, CameraOff, FlipHorizontal2, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Camera, CameraOff, Eye, EyeOff, FlipHorizontal2, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import params from "@/lib/waras_params.json";
 import { evaluateRep, jointAngles, RepTracker, type Frame, type Verdict } from "@/lib/squat";
-import { WarasCatMascot, WarasLogo, type MascotStatus } from "@/components/WarasCatMascot";
+import { WarasCatMascot, WarasLogo, type MascotStatus } from "@/components/WarasMascot";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PixelNumber } from "@/components/PixelNumber";
 
 // WASM version must match the installed @mediapipe/tasks-vision version.
 const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm";
@@ -54,8 +55,9 @@ function playCue(ac: AudioContext, ok: boolean) {
 }
 
 // Section and field labels: sentence case, no tracking. Small caps-style labels read as template chrome.
-const LABEL = "text-[13px] font-semibold text-mute";
-const RADIUS = "rounded-lg";
+const LABEL = "text-sm font-semibold text-mute";
+// Every frame corner is sharp. Change this one value to bring rounding back to the shared frames.
+const RADIUS = "rounded-none";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -71,6 +73,7 @@ export default function Home() {
   const [last, setLast] = useState<Verdict | null>(null);
   const [mirror, setMirror] = useState(true);
   const [audio, setAudio] = useState(false);
+  const [panel, setPanel] = useState(true); // side text on or off; the pixel mascot stays either way
 
   useEffect(
     () => () => {
@@ -175,15 +178,31 @@ export default function Home() {
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-line px-4">
         <div className="flex min-w-0 items-center gap-3">
           <WarasLogo size={30} />
-          <h1 className="font-display text-2xl font-bold leading-none tracking-wide">WARAS</h1>
-          <p className="truncate text-sm text-mute">
+          <h1 className="font-display text-3xl font-bold leading-none">WARAS</h1>
+          <p className="truncate text-[15px] text-mute">
             Wawasan Analisis Raga dan Sikap<span className="hidden md:inline">: korektor squat real-time</span>
           </p>
         </div>
-        <ThemeToggle />
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={() => setPanel((p) => !p)}
+            aria-pressed={panel}
+            aria-label="Tampilkan teks samping"
+            title={panel ? "Sembunyikan teks samping" : "Tampilkan teks samping"}
+            className="flex h-9 items-center gap-2 border border-line px-3 text-[15px] font-semibold text-ink hover:bg-line active:translate-y-px"
+          >
+            {panel ? <Eye size={16} strokeWidth={2} /> : <EyeOff size={16} strokeWidth={2} />}
+            <span className="hidden sm:inline">Teks samping</span>
+          </button>
+          <ThemeToggle />
+        </div>
       </header>
 
-      <main className="grid flex-1 content-start lg:grid-cols-[minmax(0,68fr)_minmax(0,32fr)] lg:grid-rows-[auto_1fr] lg:content-stretch">
+      <main
+        className={`grid flex-1 content-start lg:grid-rows-[auto_1fr] lg:content-stretch ${
+          panel ? "lg:grid-cols-[minmax(0,68fr)_minmax(0,32fr)]" : "lg:grid-cols-[minmax(0,1fr)_200px]"
+        }`}
+      >
         <section aria-label="Kamera" className="p-3 sm:p-5">
           <div className={`overflow-hidden border border-line ${RADIUS}`}>
             <div className="relative aspect-[4/3] w-full md:aspect-video">
@@ -199,9 +218,9 @@ export default function Home() {
                 <canvas ref={canvasRef} className={`absolute inset-0 h-full w-full object-contain ${flip}`} />
 
                 {running && (
-                  <p className={`absolute left-3 top-3 flex items-center gap-2 bg-canvas/80 px-2.5 py-1 text-xs font-semibold ${RADIUS}`}>
+                  <p className={`absolute left-3 top-3 flex items-center gap-2 bg-canvas/80 px-2.5 py-1 text-[13px] font-semibold ${RADIUS}`}>
                     {/* The dot marks a real state: a pose is being tracked or it is not. */}
-                    <span className={`size-2 rounded-full ${live ? "bg-accent" : "bg-line-strong"}`} aria-hidden />
+                    <span className={`size-2 ${live ? "bg-accent" : "bg-line-strong"}`} aria-hidden />
                     <span className={live ? "text-ink" : "text-mute"}>{live ? "Pose terkunci" : "Mencari pose…"}</span>
                   </p>
                 )}
@@ -252,6 +271,8 @@ export default function Home() {
           aria-label="Telemetri"
           className="flex flex-col bg-panel lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:border-l lg:border-line"
         >
+          {panel ? (
+            <>
           <div className="grid grid-cols-2">
             <Metric label="Repetisi" className="border-b border-r">
               <BigNumber>{total}</BigNumber>
@@ -280,7 +301,7 @@ export default function Home() {
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className={LABEL}>Repetisi terakhir</h2>
               {last && (
-                <p className="text-[13px] tabular-nums">
+                <p className="text-sm tabular-nums">
                   <span className="text-mute">Rep {total}: </span>
                   <span className={`font-bold ${last.ok ? "text-accent-ink" : "text-warn-ink"}`}>{last.ok ? "Valid" : "Perbaiki"}</span>
                 </p>
@@ -288,7 +309,7 @@ export default function Home() {
             </div>
             <div className="flex items-start gap-4">
               <WarasCatMascot status={mood} size={80} />
-              <div className="min-w-0 text-[15px] leading-relaxed">
+              <div className="min-w-0 text-base leading-relaxed">
                 {!last && <p className="text-mute">Lakukan satu squat penuh (turun lalu berdiri).</p>}
                 {last?.ok && <p className="font-semibold text-accent-ink">Bagus! Squat standar.</p>}
                 {last && !last.ok && (
@@ -302,9 +323,19 @@ export default function Home() {
             </div>
           </section>
 
-          <footer className="mt-auto border-t border-line px-4 py-3 text-xs leading-relaxed text-mute">
+          <footer className="mt-auto border-t border-line px-4 py-3 text-[13px] leading-relaxed text-mute">
             Video diproses di perangkatmu dan tidak dikirim ke server. Metode: Yao et al. (2026), Computers 15(5):293.
           </footer>
+            </>
+          ) : (
+            /* Text hidden: only the animated mascot is left. It still reacts to every rep. */
+            <div className="flex items-center justify-center p-4 lg:flex-1">
+              <WarasCatMascot status={mood} size={128} />
+              <p className="sr-only" aria-live="polite">
+                {last ? (last.ok ? "Squat benar" : "Squat perlu diperbaiki") : ""}
+              </p>
+            </div>
+          )}
         </aside>
 
         <MethodPanel />
@@ -329,7 +360,7 @@ function SetupOverlay({ loading, error, onStart }: { loading: boolean; error: st
           {/* A real sequence, so the steps are numbered. */}
           <ol className="space-y-2.5">
             {STEPS.map((s, i) => (
-              <li key={s} className="flex gap-3 text-sm leading-snug sm:text-[15px]">
+              <li key={s} className="flex gap-3 text-[15px] leading-snug sm:text-base">
                 <span className="w-4 shrink-0 font-semibold tabular-nums text-accent-ink">{i + 1}.</span>
                 <span>{s}</span>
               </li>
@@ -339,12 +370,12 @@ function SetupOverlay({ loading, error, onStart }: { loading: boolean; error: st
         <button
           onClick={onStart}
           disabled={loading}
-          className={`self-start bg-accent px-5 py-2.5 text-sm font-bold text-on-accent hover:bg-ink hover:text-canvas active:translate-y-px disabled:cursor-wait disabled:opacity-60 ${RADIUS}`}
+          className={`self-start bg-accent px-5 py-2.5 text-[15px] font-bold text-on-accent hover:bg-ink hover:text-canvas active:translate-y-px disabled:cursor-wait disabled:opacity-60 ${RADIUS}`}
         >
           {loading ? "Memuat model…" : "Mulai kamera"}
         </button>
         {error && (
-          <p role="alert" className={`border border-warn px-3 py-2 text-[13px] leading-snug text-warn-ink ${RADIUS}`}>
+          <p role="alert" className={`border border-warn px-3 py-2 text-sm leading-snug text-warn-ink ${RADIUS}`}>
             Kamera tidak bisa dibuka: {error}. Cek izin kamera di browser, lalu coba lagi.
           </p>
         )}
@@ -419,13 +450,13 @@ function ControlButton({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={pressed}
-      className="flex min-w-0 items-center justify-center gap-2 bg-panel px-2 text-sm font-semibold text-ink hover:bg-line active:translate-y-px disabled:cursor-not-allowed disabled:text-mute disabled:hover:bg-panel disabled:active:translate-y-0"
+      className="flex min-w-0 items-center justify-center gap-2 bg-panel px-2 text-[15px] font-semibold text-ink hover:bg-line active:translate-y-px disabled:cursor-not-allowed disabled:text-mute disabled:hover:bg-panel disabled:active:translate-y-0"
     >
       {icon}
       <span className="truncate">{children}</span>
       {/* On/off state of the toggle, so it reads without relying on color alone. */}
       {pressed !== undefined && (
-        <span className={`text-xs font-bold ${pressed ? "text-accent-ink" : "text-mute"}`}>{pressed ? "Aktif" : "Mati"}</span>
+        <span className={`text-[13px] font-bold ${pressed ? "text-accent-ink" : "text-mute"}`}>{pressed ? "Aktif" : "Mati"}</span>
       )}
     </button>
   );
@@ -440,9 +471,13 @@ function Metric({ label, className = "", children }: { label: string; className?
   );
 }
 
-// Condensed numerals: readable from the 2-3 m the person stands away from the screen.
+// Pixel numerals (components/PixelNumber.tsx): big enough to read from the 2-3 m the person stands away from the screen.
 function BigNumber({ className = "", children }: { className?: string; children: ReactNode }) {
-  return <p className={`font-display text-6xl font-bold leading-none tabular-nums ${className}`}>{children}</p>;
+  return (
+    <p className={`leading-none ${className}`}>
+      <PixelNumber value={String(children)} unit={String(children).length > 3 ? 9 : 10} />
+    </p>
+  );
 }
 
 // Gauge runs from 180° (standing, empty) to 40° (very deep, full); orange once the target depth is reached.
@@ -455,16 +490,16 @@ function Angle({ value, target }: { value?: number; target: number }) {
     <>
       <BigNumber className={reached ? "text-accent-ink" : ""}>{has ? `${value.toFixed(0)}°` : "-"}</BigNumber>
       <div>
-        <div className="relative h-1.5 rounded-full bg-line">
+        <div className="relative h-1.5 bg-line">
           {has && (
             <div
-              className={`absolute inset-y-0 left-0 rounded-full ${reached ? "bg-accent" : "bg-ink"}`}
+              className={`absolute inset-y-0 left-0 ${reached ? "bg-accent" : "bg-ink"}`}
               style={{ width: `${pct(value)}%` }}
             />
           )}
           <div className="absolute -inset-y-1 w-0.5 bg-mute" style={{ left: `${pct(target)}%` }} />
         </div>
-        <div className="mt-2 flex justify-between text-xs tabular-nums text-mute">
+        <div className="mt-2 flex justify-between text-[13px] tabular-nums text-mute">
           <span>180°</span>
           <span>Target {target}°</span>
         </div>
@@ -484,7 +519,7 @@ function History({ history }: { history: boolean[] }) {
     <div className="border-b border-line p-4">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className={LABEL}>Riwayat {HISTORY_SLOTS} rep</h2>
-        <p className="text-[13px] tabular-nums text-mute">
+        <p className="text-sm tabular-nums text-mute">
           Akurasi <span className="font-semibold text-ink">{rate === null ? "-" : `${rate}%`}</span>
         </p>
       </div>
@@ -494,7 +529,7 @@ function History({ history }: { history: boolean[] }) {
           return (
             <li
               key={i}
-              className={`h-4 rounded-sm ${ok === undefined ? "border border-line" : ok ? "bg-accent" : "bg-warn"}`}
+              className={`h-4 ${ok === undefined ? "border border-line" : ok ? "bg-accent" : "bg-warn"}`}
               aria-hidden={ok === undefined}
               aria-label={ok === undefined ? undefined : `Rep ${offset + i + 1}: ${ok ? "valid" : "perbaiki"}`}
             />
@@ -514,7 +549,7 @@ function PhaseStrip({ phase }: { phase: Phase }) {
           <li
             key={p}
             aria-current={on ? "step" : undefined}
-            className={`border-line px-2.5 py-1 text-xs font-semibold not-first:border-l ${
+            className={`border-line px-2.5 py-1 text-[13px] font-semibold not-first:border-l ${
               on ? (p === "Dasar" ? "bg-accent text-on-accent" : "bg-ink text-canvas") : "text-mute"
             }`}
           >
@@ -554,16 +589,16 @@ function MethodPanel() {
       <div className="mb-3 flex items-baseline justify-between gap-4">
         <h2 className={LABEL}>Cara penilaian</h2>
         {/* Leave-one-subject-out result on the paper's Zenodo data; see README "Akurasi". */}
-        <p className="text-[13px] tabular-nums text-mute">
+        <p className="text-sm tabular-nums text-mute">
           Akurasi uji <span className="font-semibold text-ink">91,15%</span> (LOSO)
         </p>
       </div>
       <ul className={`grid gap-px overflow-hidden border border-line bg-line sm:grid-cols-3 ${RADIUS}`}>
         {RULES.map((r) => (
           <li key={r.title} className="flex flex-col gap-2 bg-panel p-4">
-            <h3 className="text-base font-bold">{r.title}</h3>
-            <p className="text-sm leading-relaxed text-mute">{r.body}</p>
-            <p className="mt-auto border-t border-line pt-2 text-[13px] font-medium tabular-nums">{r.formula}</p>
+            <h3 className="text-lg font-bold">{r.title}</h3>
+            <p className="text-[15px] leading-relaxed text-mute">{r.body}</p>
+            <p className="mt-auto border-t border-line pt-2 text-sm font-medium tabular-nums">{r.formula}</p>
           </li>
         ))}
       </ul>

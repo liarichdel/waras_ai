@@ -54,8 +54,8 @@
   --color-on-accent: var(--on-accent);
   --color-warn: var(--warn);
   --color-warn-ink: var(--warn-ink);
-  --font-sans: var(--font-barlow);
-  --font-display: var(--font-barlow-condensed);
+  --font-sans: var(--font-pixel);
+  --font-display: var(--font-pixel);
 }
 
 body {

@@ -20,7 +20,7 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label="Ganti mode terang / gelap"
       title="Ganti mode terang / gelap"
-      className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line text-ink hover:bg-line"
+      className="flex size-9 shrink-0 items-center justify-center border border-line text-ink hover:bg-line"
     >
       <Sun size={16} strokeWidth={2} className="hidden dark:block" />
       <Moon size={16} strokeWidth={2} className="dark:hidden" />

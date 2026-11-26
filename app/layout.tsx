@@ -1,19 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow, Barlow_Condensed } from "next/font/google";
+import { Pixelify_Sans } from "next/font/google";
 import "./globals.css";
 
-// Barlow comes from road and highway signage: sturdy and readable from a distance, which matters because the
-// person stands 2-3 m from the screen. The condensed cut carries the big rep and angle numbers.
-const barlow = Barlow({
-  variable: "--font-barlow",
+// Pixelify Sans is a variable pixel font (weights 400 to 700), so no `weight` option is needed.
+// It matches the pixel mascot, logo and number glyphs, and keeps Indonesian body text readable.
+const pixel = Pixelify_Sans({
+  variable: "--font-pixel",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const barlowCondensed = Barlow_Condensed({
-  variable: "--font-barlow-condensed",
-  subsets: ["latin"],
-  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -37,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="id"
       data-theme="dark"
       suppressHydrationWarning
-      className={`${barlow.variable} ${barlowCondensed.variable} h-full antialiased`}
+      className={`${pixel.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
